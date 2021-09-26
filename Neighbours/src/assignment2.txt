@@ -1,0 +1,47 @@
+
+*** Assignment 2 Neighbours Simulation ***
+
+We are going to implement a graphical simulation of segregation.
+See : http://nifty.stanford.edu/2014/mccown-schelling-model-segregation/
+
+This is s graphical program using pygame. All graphics is implemented you don't need
+to code any graphics (you're welcome to extend, make fancier, if you like).
+
+NOTE: We are using this as a purely descriptive computational model for simulation,
+      without any political implication. The existence of a behaviour does not
+      imply it is good or bad, only that it exists.
+
+1.  Implement the method NeighboursModel.__create_world().
+    The method should initialize the List[List[Actor]] world-variable with some
+    distribution of actors to be used in the simulation.
+    When method finished it should be possible to see the dots on the screen when running
+    (they will not move).
+
+    HINT: Try to sketch a diagram. Use functional decomposition to break
+    down the initialization into manageable step. Discuss with assistant if you need ideas.
+    Remember the exercises!
+
+2.  Now your task is to implement the method NeighboursModel.__update_world() which will find all
+    dissatisfied actors (RED or BLUE) and move them to new (random, previously not occupied) 
+    positions, until all are satisfied. All unsatisfied are moved at the same time, otherwise
+    a move could affect the state of some other Actor.
+
+    The NeighboursModel.__update_world() method is automatically called by a timer (you don't need to call it).
+    The NeighboursModel.__update_world() method is *HUGE* if written as one single method!
+
+    If new to programming apply strategy as in 1. Make plan etc.....
+
+    NOTE: Not guaranteed to ever make all actors satisfied if selecting other values for dist and
+    threshold variables (see code).
+
+3.  Change SIZE to 300. Program should run as smoothly as before! If not, restructure
+    (likely you have too many nested loops). (You need to increase the window size to
+    e.g. 700 make it render properly.)
+
+## FOR MORE CHALLENGE (Everything below here is optional)
+
+4. Add a real GUI to make it possible for users to select starting parameters like threshold, like
+   on the website linked above.
+
+5. Enable the possibility to speed up and slow down the speed of simulation interactively,
+   using the keyboard.
