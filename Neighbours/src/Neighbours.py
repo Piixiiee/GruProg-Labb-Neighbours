@@ -72,12 +72,12 @@ class NeighborsModel:
         random.shuffle(temp_list)
 
         # converts the list of actors to a matrix
-        # for i in range(size):
-        #     brave_new_world.append([])
-        #     for j in range(size):
-        #         brave_new_world[i].append(temp_list[j + i * size])
-        #
-        # return brave_new_world
+         for i in range(size):
+             brave_new_world.append([])
+             for j in range(size):
+                 brave_new_world[i].append(temp_list[j + i * size])
+
+        return brave_new_world
 
     # This is the method called by the timer to update the world
     # (i.e move unsatisfied) each "frame".
