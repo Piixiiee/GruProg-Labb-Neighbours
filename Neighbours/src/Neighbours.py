@@ -51,6 +51,8 @@ class NeighborsModel:
     #TODO Bryta ner metoderna i minder delar (create world, update world)
     #TODO Testerna funkar inte längre 
 
+    #Test
+
     @staticmethod
     def __create_world(size) -> World:
 
