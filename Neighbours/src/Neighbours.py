@@ -50,18 +50,7 @@ class NeighborsModel:
 
     def __create_world(self, size) -> World:
         brave_new_world = []
-        temp_list = []
-
-        # creates a list containing actors according to the distribution and shuffles it
-        for i in range(size * size):
-            if i < red:
-                temp_list.append(Actor.RED)
-            elif red <= i < blue:
-                temp_list.append(Actor.BLUE)
-            else:
-                temp_list.append(Actor.NONE)
-
-        random.shuffle(temp_list)
+        distribution = self.create_distribution(size)
 
         # converts the list of actors to a matrix
         for i in range(size):
@@ -74,7 +63,6 @@ class NeighborsModel:
     def create_distribution(size):
         red = round(NeighborsModel.DIST[0] * size * size)
         blue = round(NeighborsModel.DIST[1] * size * size) + red
-
 
         temp_list = []
 
@@ -94,23 +82,39 @@ class NeighborsModel:
     # This is the method called by the timer to update the world
     # (i.e move unsatisfied) each "frame".
     def __update_world(self, size):
-        neighbour_list = self.create_satisfaction_list(size, self.world)
-        empty_list = self.create_list_of_empties()
+        neighbour_list = self.create_satisfaction_list(size)
 
         for row in range(len(self.world)):
             for col in range(len(self.world)):
                 if neighbour_list[row][col] == State.UNSATISFIED:
-                    rand_empty = random.randint(0, len(empty_list) - 1)
-                    empty_square = empty_list[rand_empty]
-                    mem = self.world[row][col]
+                    # gets a random Actor.NONE
+                    rand_index = random.randint(0, len(self.empty_list) - 1)
+                    empty_square = self.empty_list[rand_index]
 
-                    self.world[empty_square[0]][empty_square[1]] = mem
+                    # switches the Actors
+                    self.world[empty_square[0]][empty_square[1]] = self.world[row][col]
                     self.world[row][col] = Actor.NONE
 
-                    # Removes the used empty square and replaces it with the newly
-                    # created one
-                    del empty_list[rand_empty]
-                    empty_list.append([row, col])
+                    # adds the newly created Actor.NONE index to the others
+                    self.empty_list[rand_index] = [row, col]
+
+    # def get_random_empty(self):
+    #     rand_index = random.randint(0, len(self.empty_list) - 1)
+    #     empty_square = self.empty_list[rand_index]
+    #
+    #     return empty_square
+    #
+    # def switch_pos(self, row: int, col: int, empty_square: list):
+    #     self.world[empty_square[0]][empty_square[1]] = self.world[row][col]
+    #     self.world[row][col] = Actor.NONE
+    #
+    #     return None
+    #
+    # def refresh_empty_list(self, row: int, col: int, empty_square: list):
+    #     index = self.empty_list.index(empty_square)
+    #     self.empty_list[index] = [row, col]
+    #
+    #     return None
 
     def create_list_of_empties(self):
         index_list = []
@@ -122,45 +126,40 @@ class NeighborsModel:
 
         return index_list
 
-    def create_satisfaction_list(self, size, matrix):
+    def create_satisfaction_list(self, size):
         neighbour_list = []
 
         for row in range(size):
             neighbour_list.append([])
             for col in range(size):
-                neighbour_list[row].append(self.find_satisfaction(matrix, row, col))
+                neighbour_list[row].append(self.find_satisfaction(row, col))
 
         return neighbour_list
 
-    @staticmethod
-    def find_satisfaction(matrix, row, col):
-        neigh_count = 0
+    def find_satisfaction(self, row, col):
+        same_count = 0
         live_neigh = 0
+        index = [row, col]
 
-        if matrix[row][col] != Actor.NONE:
-            for i in range(row - 1, row + 2, 1):   # Loops through the 3 rows adjacent to the current Actor
-                try:
-                    if i >= 0:
-                        if col > 0:
-                            if matrix[i][col - 1] == matrix[row][col]:
-                                neigh_count += 1
-                            if matrix[i][col - 1] != Actor.NONE:
-                                live_neigh += 1
-                        if col < len(matrix) - 1:
-                            if matrix[i][col + 1] == matrix[row][col]:
-                                neigh_count += 1
-                            if matrix[i][col + 1] != Actor.NONE:
-                                live_neigh += 1
-                        if i != row and matrix[i][col] == matrix[row][col]:
-                            neigh_count += 1
-                        if i != row and matrix[i][col] != Actor.NONE:
-                            live_neigh += 1
+        if self.world[row][col] != Actor.NONE:
+            for i in range(row - 1, row + 2, 1):
+                if i >= 0:
+                    try:
+                        for j in range(col - 1, col + 2, 1):
+                            if j >= 0:
+                                try:
+                                    if self.world[i][j] == self.world[row][col] and [i, j] != index:
+                                        same_count += 1
+                                    if self.world[i][j] != Actor.NONE and [i, j] != index:
+                                        live_neigh += 1
 
-                except IndexError:
-                    pass
+                                except IndexError:
+                                    pass
+                    except IndexError:
+                        pass
 
             try:
-                satisfaction = neigh_count / live_neigh
+                satisfaction = same_count / live_neigh
 
                 if satisfaction >= NeighborsModel.THRESHOLD:
                     result = State.SATISFIED
@@ -180,6 +179,7 @@ class NeighborsModel:
         self.size = size
         self.world: World = self.__create_world(size)
         self.observers = []  # for enabling discoupled updating of the view, ignore
+        self.empty_list = self.create_list_of_empties()
 
     def run(self):
         clock = pg.time.Clock()
@@ -237,18 +237,19 @@ def test():
         [Actor.RED, Actor.NONE, Actor.BLUE]
     ]
 
-    N = NeighborsModel(SIZE)
-    N.world = test_world
+    n = NeighborsModel(SIZE)
+    n.world = test_world
+
     # For tests to work THRESHOLD needs to be set to 0.5
-    print(N.find_satisfaction(test_world, 0, 0) == State.SATISFIED)
-    print(N.find_satisfaction(test_world, 1, 1) == State.UNSATISFIED)
-    print(N.find_satisfaction(test_world, 1, 0) == State.NA)
+    print(n.find_satisfaction(0, 0) == State.SATISFIED)
+    print(n.find_satisfaction(1, 1) == State.UNSATISFIED)
+    print(n.find_satisfaction(1, 0) == State.NA)
 
-    print(N.create_list_of_empties() == [[0, 2], [1, 0], [1, 2], [2, 1]])
+    print(n.create_list_of_empties() == [[0, 2], [1, 0], [1, 2], [2, 1]])
 
-    print(N.create_satisfaction_list(len(test_world), test_world) == [[State.SATISFIED, State.SATISFIED, State.NA],
-                                                                      [State.NA, State.UNSATISFIED, State.NA],
-                                                                      [State.UNSATISFIED, State.NA, State.SATISFIED]])
+    print(n.create_satisfaction_list(len(test_world)) == [[State.SATISFIED, State.SATISFIED, State.NA],
+                                                          [State.NA, State.UNSATISFIED, State.NA],
+                                                          [State.UNSATISFIED, State.NA, State.SATISFIED]])
 
     # size = len(test_world)
     # print(is_valid_location(size, 0, 0))
