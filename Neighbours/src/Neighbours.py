@@ -64,6 +64,7 @@ class NeighborsModel:
         red = round(NeighborsModel.DIST[0] * size * size)
         blue = round(NeighborsModel.DIST[1] * size * size) + red
 
+
         temp_list = []
 
         # creates a list containing actors according to the distribution and shuffles it
