@@ -46,19 +46,9 @@ class NeighborsModel:
     # In this method you should generate a new world
     # using randomization according to the given arguments.
 
-    #TODO mer self.world, inte statiska metoder
-    #TODO fixa alla if-satser i find satisfaction så att den är kortare
-    #TODO Bryta ner metoderna i minder delar (create world, update world)
-    #TODO Testerna funkar inte längre 
+    # TODO Bryta ner metoderna i minder delar (update world)
 
-    #Test
-
-    @staticmethod
-    def __create_world(size) -> World:
-
-        red = round(NeighborsModel.DIST[0] * size * size)
-        blue = round(NeighborsModel.DIST[1] * size * size) + red
-
+    def __create_world(self, size) -> World:
         brave_new_world = []
         temp_list = []
 
@@ -74,12 +64,31 @@ class NeighborsModel:
         random.shuffle(temp_list)
 
         # converts the list of actors to a matrix
-         for i in range(size):
-             brave_new_world.append([])
-             for j in range(size):
-                 brave_new_world[i].append(temp_list[j + i * size])
-
+        for i in range(size):
+            brave_new_world.append([])
+            for j in range(size):
+                brave_new_world[i].append(distribution[j + i * size])
         return brave_new_world
+
+    @staticmethod
+    def create_distribution(size):
+        red = round(NeighborsModel.DIST[0] * size * size)
+        blue = round(NeighborsModel.DIST[1] * size * size) + red
+
+        temp_list = []
+
+        # creates a list containing actors according to the distribution and shuffles it
+        for i in range(size * size):
+            if i < red:
+                temp_list.append(Actor.RED)
+            elif red <= i < blue:
+                temp_list.append(Actor.BLUE)
+            else:
+                temp_list.append(Actor.NONE)
+
+        random.shuffle(temp_list)
+
+        return temp_list
 
     # This is the method called by the timer to update the world
     # (i.e move unsatisfied) each "frame".
@@ -330,5 +339,5 @@ class NeighboursView:
 
 
 if __name__ == "__main__":
-    # neighbours()
-    test()
+    neighbours()
+    # test()
