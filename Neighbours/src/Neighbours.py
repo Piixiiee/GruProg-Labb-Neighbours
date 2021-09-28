@@ -57,27 +57,27 @@ class NeighborsModel:
         red = round(NeighborsModel.DIST[0] * size * size)
         blue = round(NeighborsModel.DIST[1] * size * size) + red
 
-        brave_new_world = []
-        temp_list = []
+        # brave_new_world = []
+        # temp_list = []
+        #
+        # # creates a list containing actors according to the distribution and shuffles it
+        # for i in range(size * size):
+        #     if i < red:
+        #         temp_list.append(Actor.RED)
+        #     elif red <= i < blue:
+        #         temp_list.append(Actor.BLUE)
+        #     else:
+        #         temp_list.append(Actor.NONE)
+        #
+        # random.shuffle(temp_list)
+        #
+        # # converts the list of actors to a matrix
+        #  for i in range(size):
+        #      brave_new_world.append([])
+        #      for j in range(size):
+        #          brave_new_world[i].append(temp_list[j + i * size])
 
-        # creates a list containing actors according to the distribution and shuffles it
-        for i in range(size * size):
-            if i < red:
-                temp_list.append(Actor.RED)
-            elif red <= i < blue:
-                temp_list.append(Actor.BLUE)
-            else:
-                temp_list.append(Actor.NONE)
-
-        random.shuffle(temp_list)
-
-        # converts the list of actors to a matrix
-         for i in range(size):
-             brave_new_world.append([])
-             for j in range(size):
-                 brave_new_world[i].append(temp_list[j + i * size])
-
-        return brave_new_world
+         return brave_new_world
 
     # This is the method called by the timer to update the world
     # (i.e move unsatisfied) each "frame".
