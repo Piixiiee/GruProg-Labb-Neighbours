@@ -26,7 +26,7 @@ class State(Enum):
 
 World = List[List[Actor]]  # Type alias
 
-SIZE = 300
+SIZE = 30
 
 
 def neighbours():
@@ -46,7 +46,10 @@ class NeighborsModel:
     # In this method you should generate a new world
     # using randomization according to the given arguments.
 
-    # TODO Bryta ner metoderna i minder delar (update world)
+# TODO Bryta ner update world, find satisfaction,
+# TODO Byta namn på funtioner
+# TODO Fixa logiken i men byten
+# TODO Fixa try/error
 
     def __create_world(self, size) -> World:
         brave_new_world = []
@@ -62,15 +65,16 @@ class NeighborsModel:
     @staticmethod
     def create_distribution(size):
         red = round(NeighborsModel.DIST[0] * size * size)
-        blue = round(NeighborsModel.DIST[1] * size * size) + red
+        blue = round(NeighborsModel.DIST[1] * size * size)
 
         temp_list = []
+        # temp_list += [Actor.RED] * red
 
         # creates a list containing actors according to the distribution and shuffles it
         for i in range(size * size):
             if i < red:
                 temp_list.append(Actor.RED)
-            elif red <= i < blue:
+            elif red <= i < blue + red:
                 temp_list.append(Actor.BLUE)
             else:
                 temp_list.append(Actor.NONE)
@@ -87,34 +91,19 @@ class NeighborsModel:
         for row in range(len(self.world)):
             for col in range(len(self.world)):
                 if neighbour_list[row][col] == State.UNSATISFIED:
-                    # gets a random Actor.NONE
-                    rand_index = random.randint(0, len(self.empty_list) - 1)
-                    empty_square = self.empty_list[rand_index]
+                    x, y = self.get_random_empty(row, col)
 
                     # switches the Actors
                     self.world[empty_square[0]][empty_square[1]] = self.world[row][col]
                     self.world[row][col] = Actor.NONE
 
-                    # adds the newly created Actor.NONE index to the others
-                    self.empty_list[rand_index] = [row, col]
+    def get_random_empty(self, row, col):  # Returns a random empty square and adds the empty square that
+        # will be created
+        rand_index = random.randint(0, len(self.empty_list) - 1)
+        empty_square = self.empty_list[rand_index]
+        self.empty_list[rand_index] = (row, col)
 
-    # def get_random_empty(self):
-    #     rand_index = random.randint(0, len(self.empty_list) - 1)
-    #     empty_square = self.empty_list[rand_index]
-    #
-    #     return empty_square
-    #
-    # def switch_pos(self, row: int, col: int, empty_square: list):
-    #     self.world[empty_square[0]][empty_square[1]] = self.world[row][col]
-    #     self.world[row][col] = Actor.NONE
-    #
-    #     return None
-    #
-    # def refresh_empty_list(self, row: int, col: int, empty_square: list):
-    #     index = self.empty_list.index(empty_square)
-    #     self.empty_list[index] = [row, col]
-    #
-    #     return None
+        return empty_square
 
     def create_list_of_empties(self):
         index_list = []
