@@ -26,7 +26,7 @@ class State(Enum):
 
 World = List[List[Actor]]  # Type alias
 
-SIZE = 30
+SIZE = 300
 
 
 def neighbours():
@@ -39,21 +39,15 @@ def neighbours():
 class NeighborsModel:
     # Tune these numbers to test different distributions or update speeds
     FRAME_RATE = 20
-    DIST = [0.25, 0.25, 0.5]  # % of RED, BLUE, and NONE
-    THRESHOLD = 0.7  # % of surrounding neighbours that should be like me for satisfaction
+    DIST = [0.45, 0.45, 0.1]  # % of RED, BLUE, and NONE
+    THRESHOLD = 0.5  # % of surrounding neighbours that should be like me for satisfaction
 
     # ########### These following two methods are what you're supposed to implement  ###########
     # In this method you should generate a new world
     # using randomization according to the given arguments.
-
-# TODO Bryta ner update world, find satisfaction,
-# TODO Byta namn på funtioner
-# TODO Fixa logiken i men byten
-# TODO Fixa try/error
-
     def __create_world(self, size) -> World:
         brave_new_world = []
-        distribution = self.create_distribution(size)
+        distribution = self.create_distribution_list(size)
 
         # converts the list of actors to a matrix
         for i in range(size):
@@ -63,13 +57,11 @@ class NeighborsModel:
         return brave_new_world
 
     @staticmethod
-    def create_distribution(size):
+    def create_distribution_list(size):
         red = round(NeighborsModel.DIST[0] * size * size)
         blue = round(NeighborsModel.DIST[1] * size * size)
 
         temp_list = []
-        # temp_list += [Actor.RED] * red
-
         # creates a list containing actors according to the distribution and shuffles it
         for i in range(size * size):
             if i < red:
@@ -86,36 +78,51 @@ class NeighborsModel:
     # This is the method called by the timer to update the world
     # (i.e move unsatisfied) each "frame".
     def __update_world(self, size):
-        neighbour_list = self.create_satisfaction_list(size)
+        self.satisfaction_matrix = self.create_satisfaction_matrix(size)
+        self.unsatisfied_list = self.create_list_of_unsatisfied()
 
-        for row in range(len(self.world)):
-            for col in range(len(self.world)):
-                if neighbour_list[row][col] == State.UNSATISFIED:
-                    x, y = self.get_random_empty(row, col)
+        for coordinates in self.empty_list:
+            if len(self.unsatisfied_list) != 0:
+                self.swap_actor(coordinates)
 
-                    # switches the Actors
-                    self.world[empty_square[0]][empty_square[1]] = self.world[row][col]
-                    self.world[row][col] = Actor.NONE
+        self.empty_list = self.create_list_of_empties()
 
-    def get_random_empty(self, row, col):  # Returns a random empty square and adds the empty square that
-        # will be created
-        rand_index = random.randint(0, len(self.empty_list) - 1)
-        empty_square = self.empty_list[rand_index]
-        self.empty_list[rand_index] = (row, col)
+    def swap_actor(self, empty_coordinates):
+        x, y = self.get_random_unsatisfied()
+        z, w = empty_coordinates
 
-        return empty_square
+        self.world[z][w] = self.world[x][y]
+        self.world[x][y] = Actor.NONE
+
+    def get_random_unsatisfied(self):  # Returns a random unsatisfied actor and removes it from the list
+        rand_index = random.randint(0, len(self.unsatisfied_list) - 1)
+        unsatisfied_actor = self.unsatisfied_list[rand_index]
+        del self.unsatisfied_list[rand_index]
+
+        return unsatisfied_actor
 
     def create_list_of_empties(self):
-        index_list = []
+        coordinate_list = []
 
         for row in range(len(self.world)):
             for col in range(len(self.world)):
                 if self.world[row][col] == Actor.NONE:
-                    index_list.append([row, col])
+                    coordinate_list.append((row, col))
+        shuffle(coordinate_list)
 
-        return index_list
+        return coordinate_list
 
-    def create_satisfaction_list(self, size):
+    def create_list_of_unsatisfied(self):
+        coordinate_list = []
+
+        for row in range(len(self.satisfaction_matrix)):
+            for col in range(len(self.satisfaction_matrix)):
+                if self.satisfaction_matrix[row][col] == State.UNSATISFIED:
+                    coordinate_list.append((row, col))
+
+        return coordinate_list
+
+    def create_satisfaction_matrix(self, size):
         neighbour_list = []
 
         for row in range(size):
@@ -128,38 +135,39 @@ class NeighborsModel:
     def find_satisfaction(self, row, col):
         same_count = 0
         live_neigh = 0
-        index = [row, col]
+        index = (row, col)
+
+        from_col = max(0, col - 1)
+        to_col = min(col + 2, self.size)
+        from_row = max(0, row - 1)
+        to_row = min(row + 2, self.size)
 
         if self.world[row][col] != Actor.NONE:
-            for i in range(row - 1, row + 2, 1):
-                if i >= 0:
-                    try:
-                        for j in range(col - 1, col + 2, 1):
-                            if j >= 0:
-                                try:
-                                    if self.world[i][j] == self.world[row][col] and [i, j] != index:
-                                        same_count += 1
-                                    if self.world[i][j] != Actor.NONE and [i, j] != index:
-                                        live_neigh += 1
+            for i in range(from_row, to_row):
+                for j in range(from_col, to_col):
+                    if self.world[i][j] == self.world[row][col] and (i, j) != index:
+                        same_count += 1
+                    if self.world[i][j] != Actor.NONE and (i, j) != index:
+                        live_neigh += 1
 
-                                except IndexError:
-                                    pass
-                    except IndexError:
-                        pass
-
-            try:
-                satisfaction = same_count / live_neigh
-
-                if satisfaction >= NeighborsModel.THRESHOLD:
-                    result = State.SATISFIED
-                else:
-                    result = State.UNSATISFIED
-
-            except ZeroDivisionError:
-                result = State.UNSATISFIED
+            result = self.calculate_satisfaction_state(same_count, live_neigh)
 
         else:
             result = State.NA
+
+        return result
+
+    @staticmethod
+    def calculate_satisfaction_state(same_count, live_neigh):
+        if live_neigh != 0:
+            satisfaction = same_count / live_neigh
+
+            if satisfaction >= NeighborsModel.THRESHOLD:
+                result = State.SATISFIED
+            else:
+                result = State.UNSATISFIED
+        else:
+            result = State.UNSATISFIED
 
         return result
 
@@ -236,9 +244,9 @@ def test():
 
     print(n.create_list_of_empties() == [[0, 2], [1, 0], [1, 2], [2, 1]])
 
-    print(n.create_satisfaction_list(len(test_world)) == [[State.SATISFIED, State.SATISFIED, State.NA],
-                                                          [State.NA, State.UNSATISFIED, State.NA],
-                                                          [State.UNSATISFIED, State.NA, State.SATISFIED]])
+    print(n.create_satisfaction_matrix(len(test_world)) == [[State.SATISFIED, State.SATISFIED, State.NA],
+                                                            [State.NA, State.UNSATISFIED, State.NA],
+                                                            [State.UNSATISFIED, State.NA, State.SATISFIED]])
 
     # size = len(test_world)
     # print(is_valid_location(size, 0, 0))
